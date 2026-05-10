@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Índice de Materias - GitHub Pages</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary-text: #1c1e21;
+            --accent-blue: #007bff;
+            --hover-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #e1e4e8;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent-blue);
+        }
+
+        .card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            color: var(--accent-blue);
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #65676b;
+            text-align: center;
+        }
+
+        .badge {
+            background: #e7f3ff;
+            color: var(--accent-blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mi Repositorio de Estudio</h1>
+        <p>Selecciona una categoría para revisar el material</p>
+    </header>
+
+    <div class="container">
+        <div class="grid-container">
+            
+            <!-- Carpeta Lengua 2 -->
+            <a href="lengua 2/l2-tarjetas-Unit 1.html" class="card">
+                <span class="badge">Carpeta</span>
+                <h2>Lengua 2</h2>
+                <p>Acceder a l2-tarjetas-Unit 1.html</p>
+            </a>
+
+            <!-- Carpeta Gramática 2 -->
+            <a href="gramatica 2/index-gramatica.html" class="card">
+                <span class="badge">Carpeta</span>
+                <h2>Gramática 2</h2>
+                <p>Repaso de estructuras y reglas.</p>
+            </a>
+
+            <!-- Carpeta UDI 2 -->
+            <a href="udi 2/index-udi.html" class="card">
+                <span class="badge">Carpeta</span>
+                <h2>UDI 2</h2>
+                <p>Unidades de Didáctica Integrada.</p>
+            </a>
+
+        </div>
+    </div>
+
+</body>
+</html>
