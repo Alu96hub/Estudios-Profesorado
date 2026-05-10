@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  ============================================================
+  L2 Tarjetas C10 — Flashcard Study Page  v2
+  Lengua 2 / Capítulo 10
+  ============================================================
+  NOVEDADES v2:
+    - Mezcla automática al cargar
+    - Repetición espaciada inteligente (SM-2 simplificado)
+    - Modo Quiz: escribir la respuesta
+    - Atajos de teclado (← → Espacio T)
+    - Text-to-speech nativo del navegador (Web Speech API)
+    - Panel de historial/progreso por sesión
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>L2 Tarjetas Unit 2</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       VARIABLES GLOBALES
+       ============================================================ */
+    :root {
+      --accent:        #F97316;
+      --accent-light:  #FED7AA;
+      --accent-dark:   #C2410C;
+
+      --bg:            #F8F8F7;
+      --surface:       #FFFFFF;
+      --border:        #E5E5E3;
+      --text:          #1A1A18;
+      --text-muted:    #6B6B67;
+      --text-light:    #A8A8A4;
+
+      --green:         #16A34A;
+      --green-light:   #DCFCE7;
+      --red:           #DC2626;
+      --red-light:     #FEE2E2;
+      --gray:          #9CA3AF;
+      --gray-light:    #F3F4F6;
+      --blue:          #2563EB;
+      --blue-light:    #DBEAFE;
+
+      --radius:        12px;
+      --radius-sm:     8px;
+      --shadow:        0 2px 12px rgba(0,0,0,0.08);
+      --shadow-lg:     0 8px 32px rgba(0,0,0,0.12);
+
+      --font-title:    'Syne', sans-serif;
+      --font-body:     'DM Sans', sans-serif;
+      --transition:    0.2s ease;
+    }
+
+    /* ============================================================
+       RESET Y BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button { cursor: pointer; font-family: var(--font-body); border: none; background: none; }
+
+    /* ============================================================
+       LAYOUT
+       ============================================================ */
+    .page-wrapper { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-family: var(--font-title);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title span { color: var(--accent); }
+
+    /* ---- Hint de atajos de teclado ---- */
+    .keyboard-hint {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .key {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* ---- Barra de estadísticas ---- */
+    .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+
+    .stat-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 12px;
+    }
+
+    .stat-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-progress { background: var(--accent); }
+    .dot-errors   { background: var(--red); }
+    .dot-known    { background: var(--green); }
+    .dot-off      { background: var(--gray); }
+    .dot-srs      { background: var(--blue); }
+
+    .btn-history {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 12px;
+      transition: all var(--transition);
+    }
+
+    .btn-history:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ============================================================
+       PANEL DE OPCIONES
+       ============================================================ */
+    .options-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .options-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      font-family: var(--font-title);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: background var(--transition);
+    }
+
+    .options-toggle:hover { background: var(--bg); }
+
+    .options-toggle .chevron {
+      font-size: 0.75rem;
+      transition: transform var(--transition);
+      color: var(--text-muted);
+    }
+
+    .options-panel.open .chevron { transform: rotate(180deg); }
+    .options-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .options-panel.open .options-body { max-height: 520px; }
+
+    .options-inner {
+      padding: 16px 18px 20px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 20px;
+    }
+
+    .option-group > label:first-child {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .cards-count-control { display: flex; align-items: center; gap: 10px; }
+    .cards-count-control input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .cards-count-value { font-weight: 600; font-size: 1rem; min-width: 20px; text-align: center; color: var(--accent); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--text);
+      text-transform: none;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+
+    .checkbox-group input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+
+    .option-select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--text);
+      background: var(--bg);
+      cursor: pointer;
+    }
+
+    .option-select:focus { outline: 2px solid var(--accent); }
+
+    .options-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+
+    /* ---- Botones genéricos ---- */
+    .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; transition: all var(--transition); }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--red); }
+    .btn-danger:hover { background: var(--red-light); border-color: var(--red); }
+
+    /* ============================================================
+       BADGE DE MODO
+       ============================================================ */
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .mode-badge.flip-mode { background: var(--accent-light); color: var(--accent-dark); }
+    .mode-badge.quiz-mode { background: var(--blue-light);   color: var(--blue); }
+
+    /* ============================================================
+       TARJETA — MODO FLIP
+       ============================================================ */
+    .cards-area { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+
+    .cards-grid { display: grid; grid-template-columns: 1fr; gap: 16px; width: 100%; }
+
+    .card-wrapper { perspective: 1200px; }
+
+    .card {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .card.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 28px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transition: border-color var(--transition);
+    }
+
+    /* El lado B está pre-rotado para que sea visible al flipear */
+    .card-face-b { transform: rotateY(180deg); }
+
+    /* Borde izquierdo: estado de conocimiento */
+    .card[data-status="known"]    .card-face { border-left: 4px solid var(--green); }
+    .card[data-status="unknown"]  .card-face { border-left: 4px solid var(--red); }
+    .card[data-status="disabled"] .card-face { border-left: 4px solid var(--gray); opacity: 0.6; }
+
+    /* Borde derecho: madurez SRS (azul=dominada, naranja=joven, borde normal=nueva) */
+    .card[data-srs="mature"] .card-face { border-right: 3px solid var(--blue); }
+    .card[data-srs="young"]  .card-face { border-right: 3px solid var(--accent); }
+
+    .card-side-label { position: absolute; top: 10px; left: 14px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-light); }
+    .card-number     { position: absolute; top: 10px; right: 14px; font-size: 0.65rem; color: var(--text-light); }
+
+    /* Botón de escuchar dentro de la tarjeta */
+    .tts-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-size: 1rem;
+      color: var(--text-light);
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color var(--transition), background var(--transition);
+      line-height: 1;
+    }
+
+    .tts-btn:hover { color: var(--accent); background: var(--accent-light); }
+
+    .card-word {
+      font-family: var(--font-title);
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    /* Info SRS debajo de la palabra */
+    .srs-info { font-size: 0.68rem; color: var(--blue); margin-top: 6px; font-weight: 500; }
+
+    .card-hint { font-size: 0.8rem; color: var(--text-light); margin-top: 8px; }
+
+    .card-b-content { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 340px; }
+    .card-meaning       { font-size: 1.2rem; font-weight: 600; color: var(--text); }
+    .card-pronunciation { font-size: 0.9rem; color: var(--accent); font-style: italic; }
+    .card-example       { font-size: 0.85rem; color: var(--text-muted); border-left: 3px solid var(--accent-light); padding-left: 10px; text-align: left; }
+
+    .card-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+
+    .rating-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--bg);
+      transition: all var(--transition);
+    }
+
+    .rating-btn:hover { transform: translateY(-1px); }
+    .rating-btn.known-active    { background: var(--green-light); border-color: var(--green); color: var(--green); }
+    .rating-btn.unknown-active  { background: var(--red-light);   border-color: var(--red);   color: var(--red); }
+    .rating-btn.disabled-active { background: var(--gray-light);  border-color: var(--gray);  color: var(--gray); }
+
+    /* ============================================================
+       MODO QUIZ
+       ============================================================ */
+    .quiz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 24px 24px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .quiz-prompt-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .quiz-word {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .quiz-input {
+      width: 100%;
+      max-width: 320px;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--bg);
+      text-align: center;
+      transition: border-color var(--transition);
+      outline: none;
+    }
+
+    .quiz-input:focus   { border-color: var(--accent); }
+    .quiz-input.correct   { border-color: var(--green); background: var(--green-light); }
+    .quiz-input.incorrect { border-color: var(--red);   background: var(--red-light); }
+
+    .quiz-feedback { font-size: 0.9rem; font-weight: 500; min-height: 1.3em; }
+    .quiz-feedback.correct   { color: var(--green); }
+    .quiz-feedback.incorrect { color: var(--red); }
+
+    .quiz-answer-reveal { font-size: 0.85rem; color: var(--text-muted); display: none; }
+
+    /* ============================================================
+       NAVEGACIÓN
+       ============================================================ */
+    .nav-controls { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      transition: all var(--transition);
+    }
+
+    .nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); transform: scale(1.05); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-info { font-size: 0.85rem; color: var(--text-muted); min-width: 80px; text-align: center; }
+
+    /* ============================================================
+       PANTALLAS DE PAUSA Y FIN
+       ============================================================ */
+    .pause-screen, .finish-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 48px 32px;
+      width: 100%;
+      gap: 16px;
+    }
+
+    .pause-screen.active, .finish-screen.active { display: flex; }
+
+    .pause-icon  { font-size: 3rem; margin-bottom: 4px; }
+    .pause-title { font-family: var(--font-title); font-size: 1.5rem; font-weight: 700; }
+    .pause-stats { display: flex; gap: 24px; margin: 8px 0; flex-wrap: wrap; justify-content: center; }
+    .pause-stat  { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pause-stat-num   { font-size: 2rem; font-weight: 700; font-family: var(--font-title); }
+    .pause-stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .pause-stat-num.orange { color: var(--accent); }
+    .pause-stat-num.green  { color: var(--green); }
+    .pause-stat-num.red    { color: var(--red); }
+    .pause-stat-num.blue   { color: var(--blue); }
+    .pause-desc { font-size: 0.9rem; color: var(--text-muted); max-width: 340px; }
+
+    /* ============================================================
+       MODAL DE HISTORIAL
+       ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 480px;
+      padding: 28px 24px;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-close { position: absolute; top: 14px; right: 16px; font-size: 1.2rem; color: var(--text-muted); transition: color var(--transition); }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-title { font-family: var(--font-title); font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+
+    .progress-section { margin-bottom: 20px; }
+
+    .progress-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-wrap { background: var(--gray-light); border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; background: var(--green); transition: width 0.5s ease; }
+    .progress-bar-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* Gráfico de sesiones */
+    .session-chart { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin-bottom: 6px; }
+
+    .session-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 2px;
+    }
+
+    .session-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
+    .session-bar.green-bar { background: var(--green); }
+    .session-bar.red-bar   { background: var(--red); }
+    .session-bar-label { font-size: 0.6rem; color: var(--text-light); white-space: nowrap; }
+
+    /* Lista por tarjeta */
+    .card-progress-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+
+    .card-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+    }
+
+    .card-progress-word { font-weight: 600; font-size: 0.85rem; flex: 1; min-width: 80px; }
+    .card-progress-srs  { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+    .card-status-dot    { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text);
+      color: white;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 480px) {
+      .card-word { font-size: 1.4rem; }
+      .quiz-word { font-size: 1.5rem; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .keyboard-hint { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     DATOS DE LAS TARJETAS (JSON embebido)
+     Campos:
+       id:            identificador único
+       word:          Lado A — palabra en inglés
+       meaning:       Lado B — significado en español
+       pronunciation: Lado B — transcripción fonética
+       example:       Lado B — ejemplo de uso
+     ============================================================ -->
+<script id="cards-data" type="application/json">
+[
+  { "id": 2.1, "word": "Global", "meaning": "Relating to the whole world.", "pronunciation": "/ˈɡləʊbl/", "example": "The global temperature has risen significantly in the last century." },
+  { "id": 2.2, "word": "Culture", "meaning": "The common habits and beliefs of a particular group of people.", "pronunciation": "/ˈkʌltʃə(r)/", "example": "Each culture has different ways of celebrating important events." },
+  { "id": 2.3, "word": "Server", "meaning": "A person who serves food; a waiter or waitress.", "pronunciation": "/ˈsɜːvə(r)/", "example": "Did you ask the server for a napkin?" },
+  { "id": 2.4, "word": "Funeral", "meaning": "A ceremony that takes place when someone's dead body is buried.", "pronunciation": "/ˈfjuːnərəl/", "example": "In Greece, most people wear black at funerals." },
+  { "id": 2.5, "word": "Identity", "meaning": "The things that make you different from others.", "pronunciation": "/aɪˈdentəti/", "example": "Even though they share a language, Britain and the United States have different cultural identities." },
+  { "id": 2.6, "word": "Lifestyle", "meaning": "Someone's way of living.", "pronunciation": "/ˈlaɪfstaɪl/", "example": "He needs a lot of money to support his expensive lifestyle." },
+  { "id": 2.7, "word": "Reflect", "meaning": "To show or express the nature of something.", "pronunciation": "/rɪˈflekt/", "example": "The story reflects the author's political ideas." },
+  { "id": 2.8, "word": "Tribe", "meaning": "A group of related families who live in the same area and share a culture.", "pronunciation": "/traɪb/", "example": "Native American tribes have lived in this area for hundreds of years." },
+  { "id": 2.9, "word": "Lead", "meaning": "To live a particular type of life.", "pronunciation": "/liːd/", "example": "He managed to lead a normal life in spite of his disability." },
+  { "id": 2.10, "word": "Sensibly", "meaning": "In a way that is logical and practical.", "pronunciation": "/ˈsensəbli/", "example": "You should dress sensibly for our walk in the mountains." },
+  { "id": 2.11, "word": "Bead", "meaning": "A small, round piece of glass, plastic, or wood with a hole through it.", "pronunciation": "/biːd/", "example": "She used sixty black beads to make her necklace." },
+  { "id": 2.12, "word": "Head wrap", "meaning": "A head covering made of cloth that you wear around the head.", "pronunciation": "/hed ræp/", "example": "You can style a head wrap in many different ways." },
+  { "id": 2.13, "word": "Turban", "meaning": "A head covering made of cloth, common in certain cultures.", "pronunciation": "/ˈtɜːbən/", "example": "He was wearing a black turban that covered his hair completely." },
+  { "id": 2.14, "word": "Kilt", "meaning": "A skirt that men in Scotland traditionally wear.", "pronunciation": "/kɪlt/", "example": "A group of men in kilts performed a Scottish country dance." },
+  { "id": 2.15, "word": "Tartan", "meaning": "A pattern of coloured squares and lines on cloth, typical of Scotland.", "pronunciation": "/ˈtɑːtən/", "example": "He was wearing a green tartan kilt." },
+  { "id": 2.16, "word": "Warrior", "meaning": "A skilled fighter.", "pronunciation": "/ˈwɒriə(r)/", "example": "Viking warriors were usually buried together with their weapons." },
+  { "id": 2.17, "word": "Form", "meaning": "A type or kind of something.", "pronunciation": "/fɔːm/", "example": "Bicycles are probably the cheapest form of transport." },
+  { "id": 2.18, "word": "Wearer", "meaning": "Someone who wears something.", "pronunciation": "/ˈweərə(r)/", "example": "Clothes can tell you a lot about the wearer's personality." },
+  { "id": 2.19, "word": "Status", "meaning": "Someone's position in a social group.", "pronunciation": "/ˈsteɪtəs/", "example": "Following her death, the author gained unexpected celebrity status." },
+  { "id": 2.20, "word": "Inspire", "meaning": "To give someone a creative idea.", "pronunciation": "/ɪnˈspaɪə(r)/", "example": "This view really inspires me to paint." },
+  { "id": 2.21, "word": "Trademark", "meaning": "To register a name or design to protect it from illegal copying.", "pronunciation": "/ˈtreɪdmɑːk/", "example": "The first thing they did was to trademark the new company name." },
+  { "id": 2.22, "word": "Fashion house", "meaning": "A company that designs and sells clothes, shoes, and accessories.", "pronunciation": "/ˈfæʃn haʊs/", "example": "Chanel founded her own fashion house in 1910." },
+  { "id": 2.23, "word": "Permission", "meaning": "The act of allowing someone to do something.", "pronunciation": "/pəˈmɪʃn/", "example": "You'll need your parents' permission to go on the school trip." },
+  { "id": 2.24, "word": "Date back", "meaning": "To have existed for a particular length of time.", "pronunciation": "/deɪt bæk/", "example": "The church dates back to the 12th century." },
+  { "id": 2.25, "word": "Sea shell", "meaning": "The hard outer covering that protects some sea creatures.", "pronunciation": "/ˈsiː ʃel/", "example": "The children were collecting sea shells on the beach." },
+  { "id": 2.26, "word": "Series", "meaning": "A number of events or things that are similar or related.", "pronunciation": "/ˈsɪəriːz/", "example": "My mother is giving a series of lectures on global warming." },
+  { "id": 2.27, "word": "Hold", "meaning": "To have or organize an event, like a meeting or sports event.", "pronunciation": "/həʊld/", "example": "The marathon will be held in May." },
+  { "id": 2.28, "word": "State", "meaning": "To say or write something in a clear and careful way.", "pronunciation": "/steɪt/", "example": "In her application, she had to state why she wanted the job." },
+  { "id": 2.29, "word": "Settle", "meaning": "To go and live in a new place.", "pronunciation": "/ˈsetl/", "example": "When his grandfather came to America, he settled in Boston." },
+  { "id": 2.30, "word": "Plaid", "meaning": "Cloth with a pattern of lines and squares.", "pronunciation": "/plæd/", "example": "This shirt is made in plain grey or plaid." },
+  { "id": 2.31, "word": "Invasion", "meaning": "An occasion when an army or country uses force to enter and take control of another country.", "pronunciation": "/ɪnˈveɪʒn/", "example": "The country is preparing for a possible invasion." },
+  { "id": 2.32, "word": "Conflict", "meaning": "A serious disagreement or argument, typically a protracted one.", "pronunciation": "/ˈkɒnflɪkt/", "example": "The Government is trying to find a peaceful solution to the conflict." },
+  { "id": 2.33, "word": "Banned", "meaning": "Not allowed; officially forbidden.", "pronunciation": "/bænd/", "example": "Smoking is banned in all public buildings." },
+  { "id": 2.34, "word": "Regard", "meaning": "To consider or think of someone or something in a specified way.", "pronunciation": "/rɪˈɡɑːd/", "example": "He is generally regarded as one of the best actors in the country." },
+  { "id": 2.35, "word": "Pattern", "meaning": "A decorative design that is repeated on a surface.", "pronunciation": "/ˈpætən/", "example": "The wallpaper has a beautiful floral pattern." },
+  { "id": 2.36, "word": "Distinctive", "meaning": "Having a quality or characteristic that makes something different and easily noticed.", "pronunciation": "/dɪˈstɪŋktɪv/", "example": "The male bird has a very distinctive red head." },
+  { "id": 2.37, "word": "Associated (with)", "meaning": "Connected with something else in your mind.", "pronunciation": "/əˈsəʊʃieɪtɪd/", "example": "The color green is often associated with nature and luck." },
+  { "id": 2.38, "word": "Unify", "meaning": "To bring together or combine to form a single unit or whole.", "pronunciation": "/ˈjuːnɪfaɪ/", "example": "The goal of the project was to unify the different departments of the company." },
+  { "id": 2.39, "word": "Signify", "meaning": "To be a sign of something; to mean.", "pronunciation": "/ˈsɪɡnɪfaɪ/", "example": "A red light signifies that you must stop." },
+  { "id": 2.40, "word": "Commercial", "meaning": "Related to buying and selling things for profit.", "pronunciation": "/kəˈmɜːʃl/", "example": "The city center is the main commercial district." },
+  { "id": 2.41, "word": "Profit", "meaning": "Money that is earned in trade or business after paying the costs of producing and selling goods.", "pronunciation": "/ˈprɒfɪt/", "example": "The company made a huge profit last year." },
+  { "id": 2.42, "word": "Loss", "meaning": "The fact of making less money than is spent on a business.", "pronunciation": "/lɒs/", "example": "The company reported a loss of five million dollars." },
+  { "id": 2.43, "word": "Cheque", "meaning": "A printed form, used instead of money, to make payments from your bank account.", "pronunciation": "/tʃek/", "example": "I wrote a cheque for the full amount." },
+  { "id": 2.44, "word": "Globalisation", "meaning": "The process by which businesses or other organizations develop international influence.", "pronunciation": "/ˌɡləʊbəlaɪˈzeɪʃn/", "example": "Globalisation has led to many changes in the world economy." },
+  { "id": 2.45, "word": "Mainstream", "meaning": "Representing the most widespread or common beliefs or activities of a society.", "pronunciation": "/ˈmeɪnstriːm/", "example": "Vegetarianism is now much more mainstream than it used to be." },
+  { "id": 2.46, "word": "Widespread", "meaning": "Existing or happening in many places and/or among many people.", "pronunciation": "/ˈwaɪdspred/", "example": "The new law has caused widespread concern." },
+  { "id": 2.47, "word": "Corporate", "meaning": "Relating to a large company or group.", "pronunciation": "/ˈkɔːpərət/", "example": "He works in the corporate world of finance." },
+  { "id": 2.48, "word": "Logo", "meaning": "A design or symbol used by a company to advertise its products.", "pronunciation": "/ˈləʊɡəʊ/", "example": "I recognized the company's logo immediately." },
+  { "id": 2.49, "word": "Boundary", "meaning": "A line that marks the edge of an area; a limit.", "pronunciation": "/ˈbaʊndri/", "example": "The river forms the boundary between the two countries." },
+  { "id": 2.50, "word": "Border", "meaning": "The line that separates two countries or regions.", "pronunciation": "/ˈbɔːdə(r)/", "example": "You need to show your passport when you cross the border." },
+  { "id": 2.51, "word": "Region", "meaning": "A particular area or part of the world or a country.", "pronunciation": "/ˈriːdʒən/", "example": "The southern region of the country is famous for its fruit." },
+  { "id": 2.52, "word": "Landscape", "meaning": "A large area of countryside, especially in terms of its appearance.", "pronunciation": "/ˈlændskeɪp/", "example": "The landscape was dominated by high mountains." },
+  { "id": 2.53, "word": "Feature", "meaning": "A typical quality or an important part of something.", "pronunciation": "/ˈfiːtʃə(r)/", "example": "The most interesting feature of the house is the glass roof." },
+  { "id": 2.54, "word": "Custom", "meaning": "A way of behaving or a belief that has been established for a long time.", "pronunciation": "/ˈkʌstəm/", "example": "It is the custom in many countries to take off your shoes when entering a house." },
+  { "id": 2.55, "word": "Values", "meaning": "The beliefs people have about what is right and wrong and what is important in life.", "pronunciation": "/ˈvæljuːz/", "example": "The school aims to teach children traditional values like honesty and respect." },
+  { "id": 2.56, "word": "Preserve", "meaning": "To keep something as it is, especially in order to prevent it from being damaged or destroyed.", "pronunciation": "/prɪˈzɜːv/", "example": "We must do more to preserve our historical buildings." },
+  { "id": 2.57, "word": "Unique", "meaning": "Being the only one of its kind; unlike anything else.", "pronunciation": "/juˈniːk/", "example": "Each person's fingerprints are unique." },
+  { "id": 2.58, "word": "Influence", "meaning": "The power to have an effect on people or things.", "pronunciation": "/ˈɪnfluəns/", "example": "My parents had a huge influence on my choice of career." },
+  { "id": 2.59, "word": "Impact", "meaning": "The powerful effect that something has on a situation or person.", "pronunciation": "/ˈɪmpækt/", "example": "The new law will have a major impact on small businesses." },
+  { "id": 2.60, "word": "Harmonious", "meaning": "Friendly and peaceful; without any fighting or disagreement.", "pronunciation": "/hɑːˈməʊniəs/", "example": "The goal is to create a more harmonious society." },
+  { "id": 2.61, "word": "Inhabitant", "meaning": "A person or animal that lives in a particular place.", "pronunciation": "/ɪnˈhæbɪtənt/", "example": "The city has over five million inhabitants." },
+  { "id": 2.62, "word": "Mainly", "meaning": "More than anything else; for the most part.", "pronunciation": "/ˈmeɪnli/", "example": "The group is made up mainly of young people." },
+  { "id": 2.63, "word": "Agriculture", "meaning": "The science or practice of farming, including cultivation of the soil and the rearing of animals.", "pronunciation": "/ˈæɡrɪkʌltʃə(r)/", "example": "The country's economy is based on agriculture." },
+  { "id": 2.64, "word": "Modernise", "meaning": "To make a system, methods, or a building modern in style or function.", "pronunciation": "/ˈmɒdənaɪz/", "example": "They are planning to modernise the entire rail network." },
+  { "id": 2.65, "word": "Investment", "meaning": "The act of putting money, effort, or time into something to make a profit or get an advantage.", "pronunciation": "/ɪnˈvestmənt/", "example": "The government is calling for more investment in education." },
+  { "id": 2.66, "word": "Economic", "meaning": "Relating to trade, industry, and money.", "pronunciation": "/ˌiːkəˈnɒmɪk/", "example": "The country is facing a serious economic crisis." },
+  { "id": 2.67, "word": "Standard of living", "meaning": "The amount of money and comfort people have in a particular society.", "pronunciation": "/ˌstændəd əv ˈlɪvɪŋ/", "example": "The standard of living in many European countries is very high." },
+  { "id": 2.68, "word": "Wealthy", "meaning": "Having a great deal of money, resources, or assets; rich.", "pronunciation": "/ˈwelθi/", "example": "He comes from a very wealthy family." },
+  { "id": 2.69, "word": "Poverty", "meaning": "The state of being extremely poor.", "pronunciation": "/ˈpɒvəti/", "example": "Many people in the region are living in extreme poverty." },
+  { "id": 2.70, "word": "Fair trade", "meaning": "Trade in which producers in developing countries are paid a fair price for their work.", "pronunciation": "/ˌfeə ˈtreɪd/", "example": "I always try to buy fair trade coffee and chocolate." },
+  { "id": 2.71, "word": "Climate change", "meaning": "A long-term change in the earth's climate, especially due to an increase in the average atmospheric temperature.", "pronunciation": "/ˈklaɪmət tʃeɪndʒ/", "example": "Climate change is one of the biggest challenges facing the world today." },
+  { "id": 2.72, "word": "Natural disaster", "meaning": "A natural event such as a flood, earthquake, or hurricane that causes great damage or loss of life.", "pronunciation": "/ˌnætʃrəl dɪˈzɑːstə(r)/", "example": "The earthquake was the worst natural disaster in the country's history." },
+  { "id": 2.73, "word": "Global warming", "meaning": "A gradual increase in the overall temperature of the earth's atmosphere generally attributed to the greenhouse effect.", "pronunciation": "/ˌɡləʊbl ˈwɔːmɪŋ/", "example": "Global warming is causing the polar ice caps to melt." },
+  { "id": 2.74, "word": "Pollution", "meaning": "Damage caused to water, air, etc. by harmful substances or waste.", "pronunciation": "/pəˈluːʃn/", "example": "The government is trying to reduce air pollution in big cities." },
+  { "id": 2.75, "word": "Overpopulation", "meaning": "The condition of having a population so dense as to cause environmental deterioration or an impaired quality of life.", "pronunciation": "/ˌəʊvəˌpɒpjuˈleɪʃn/", "example": "Overpopulation is a major problem in many parts of the world." },
+  { "id": 2.76, "word": "Sustainable", "meaning": "Able to be maintained at a certain rate or level; or causing little or no damage to the environment.", "pronunciation": "/səˈsteɪnəbl/", "example": "We need to find more sustainable ways of producing energy." },
+  { "id": 2.77, "word": "Renewable", "meaning": "Forms of energy that can be produced as quickly as they are used, such as wind or solar power.", "pronunciation": "/rɪˈnjuːəbl/", "example": "The use of renewable energy is increasing every year." },
+  { "id": 2.78, "word": "Carbon footprint", "meaning": "The amount of carbon dioxide released into the atmosphere as a result of the activities of a particular individual or organization.", "pronunciation": "/ˌkɑːbən ˈfʊtprɪnt/", "example": "We are trying to reduce our carbon footprint by using public transport." },
+  { "id": 2.79, "word": "Biodiversity", "meaning": "The variety of plant and animal life in the world or in a particular habitat.", "pronunciation": "/ˌbaɪəʊdaɪˈvɜːsəti/", "example": "The rainforest is famous for its incredible biodiversity." },
+  { "id": 2.80, "word": "Eco-friendly", "meaning": "Not harmful to the environment.", "pronunciation": "/ˌiːkəʊ ˈfrendli/", "example": "These cleaning products are all eco-friendly." },
+  { "id": 2.81, "word": "Consume", "meaning": "To use fuel, energy, or time, especially in large amounts.", "pronunciation": "/kənˈsjuːm/", "example": "Our old car consumes a lot of petrol." },
+  { "id": 2.82, "word": "Resource", "meaning": "Something such as useful land, or minerals such as oil or coal, that exists in a country and can be used to increase its wealth.", "pronunciation": "/rɪˈsɔːs/", "example": "Water is a precious natural resource." },
+  { "id": 2.83, "word": "Consumption", "meaning": "The act of using, eating, or drinking something.", "pronunciation": "/kənˈsʌmpʃn/", "example": "We need to reduce our consumption of plastic." },
+  { "id": 2.84, "word": "Production", "meaning": "The process of making or growing goods to be sold.", "pronunciation": "/prəˈdʌkʃn/", "example": "The company has increased its production of electric cars." },
+  { "id": 2.85, "word": "Supply and demand", "meaning": "The relationship between the amount of a product available and the desire of buyers for it, considered as factors regulating its price.", "pronunciation": "/səˈplaɪ ənd dɪˈmɑːnd/", "example": "The price of oil is determined by supply and demand." },
+  { "id": 2.86, "word": "Import", "meaning": "To bring a product into a country from another country to be sold.", "pronunciation": "/ˈɪmpɔːt/", "example": "The country imports most of its oil from overseas." },
+  { "id": 2.87, "word": "Export", "meaning": "To send goods to another country for sale.", "pronunciation": "/ˈekspɔːt/", "example": "The company exports its products to over fifty countries." },
+  { "id": 2.88, "word": "Developing country", "meaning": "A country with little industrial and economic activity and where people generally have low incomes.", "pronunciation": "/dɪˈveləpɪŋ ˈkʌntri/", "example": "Many developing countries are facing serious economic problems." },
+  { "id": 2.89, "word": "Developed country", "meaning": "A country with a lot of industrial activity and where people generally have high incomes.", "pronunciation": "/dɪˈveləpt ˈkʌntri/", "example": "Standard of living is usually higher in developed countries." },
+  { "id": 2.90, "word": "Wealth", "meaning": "A large amount of money or valuable possessions that someone has.", "pronunciation": "/welθ/", "example": "He used his wealth to help poor people in his community." },
+  { "id": 2.91, "word": "Broaden your horizons", "meaning": "To expand your knowledge, experience, or way of thinking by trying new things or visiting new places.", "pronunciation": "/ˈbrɔːdn jɔː(r) həˈraɪznz/", "example": "Travelling alone for a year really helped to broaden her horizons." },
+  { "id": 2.92, "word": "Pros and cons", "meaning": "The advantages and disadvantages of a situation or action.", "pronunciation": "/prəʊz ənd kɒnz/", "example": "We need to weigh up the pros and cons before making a final decision." },
+  { "id": 2.93, "word": "Spread", "meaning": "To cover a larger area or to affect a larger number of people.", "pronunciation": "/spred/", "example": "The news of the discovery spread quickly throughout the scientific community." },
+  { "id": 2.94, "word": "Dominant", "meaning": "More important, strong, or noticeable than anything else of the same type.", "pronunciation": "/ˈdɒmɪnənt/", "example": "English is the dominant language in international business." },
+  { "id": 2.95, "word": "Vanish", "meaning": "To disappear suddenly and completely.", "pronunciation": "/ˈvænɪʃ/", "example": "Many traditional crafts are starting to vanish as technology advances." },
+  { "id": 2.96, "word": "Adopt", "meaning": "To start to use a particular method, or to take on a new culture or way of behaving.", "pronunciation": "/əˈdɒpt/", "example": "The company has decided to adopt a more eco-friendly policy." },
+  { "id": 2.97, "word": "Local", "meaning": "Relating to a particular area or neighborhood.", "pronunciation": "/ˈləʊkl/", "example": "It's important to support local businesses during the holidays." },
+  { "id": 2.98, "word": "Enrich", "meaning": "To improve the quality of something by adding something else to it.", "pronunciation": "/ɪnˈrɪtʃ/", "example": "Exposure to different cultures can greatly enrich your life." },
+  { "id": 2.99, "word": "Loss of identity", "meaning": "The process of losing the qualities or beliefs that make a person or group unique.", "pronunciation": "/lɒs əv aɪˈdentəti/", "example": "Many worry that globalisation leads to a loss of cultural identity." },
+  { "id": 2.100, "word": "Endangered", "meaning": "In danger of being harmed, lost, or unsuccessful.", "pronunciation": "/ɪnˈdeɪndʒəd/", "example": "There are hundreds of endangered languages that may disappear soon." },
+  { "id": 2.101, "word": "Threat", "meaning": "A suggestion that something unpleasant or violent will happen, or a source of danger.", "pronunciation": "/θret/", "example": "Pollution poses a serious threat to the local wildlife." },
+  { "id": 2.102, "word": "Minority", "meaning": "A smaller part of a group; less than half of the whole.", "pronunciation": "/maɪˈnɒrəti/", "example": "Only a minority of people voted against the new law." },
+  { "id": 2.103, "word": "Majority", "meaning": "The larger number or part of something.", "pronunciation": "/məˈdʒɒrəti/", "example": "The vast majority of students passed the final exam." },
+  { "id": 2.104, "word": "Official language", "meaning": "The language that is approved by the government for use in laws, courts, and schools.", "pronunciation": "/əˈfɪʃl ˈlæŋɡwɪdʒ/", "example": "English is an official language in over fifty countries." },
+  { "id": 2.105, "word": "Native speaker", "meaning": "A person who has spoken a particular language since they were a child.", "pronunciation": "/ˈneɪtɪv ˈspiːkə(r)/", "example": "It is often helpful to practice with a native speaker to improve your accent." },
+  { "id": 2.106, "word": "Mother tongue", "meaning": "The first language that you learn when you are a baby, rather than a language learned at school.", "pronunciation": "/ˈmʌðə tʌŋ/", "example": "Her mother tongue is Italian, but she speaks French fluently." },
+  { "id": 2.107, "word": "Bilingual", "meaning": "Able to use two languages equally well.", "pronunciation": "/ˌbaɪˈlɪŋɡwəl/", "example": "Growing up in a bilingual household gave him a great advantage." },
+  { "id": 2.108, "word": "Multilingual", "meaning": "Able to use more than two languages for communication.", "pronunciation": "/ˌmʌltiˈlɪŋɡwəl/", "example": "The company is looking for multilingual employees for their international office." },
+  { "id": 2.109, "word": "Dialect", "meaning": "A form of a language that is spoken in a particular part of a country.", "pronunciation": "/ˈdaɪəlekt/", "example": "The local dialect can be very difficult for outsiders to understand." },
+  { "id": 2.110, "word": "Accent", "meaning": "The way in which people in a particular area or country pronounce words.", "pronunciation": "/ˈæksent/", "example": "He has a very strong Scottish accent." },
+  { "id": 2.111, "word": "Fluent", "meaning": "Able to speak or write a particular foreign language easily and accurately.", "pronunciation": "/ˈfluːənt/", "example": "She is fluent in three languages: English, Spanish, and German." },
+  { "id": 2.112, "word": "Vocabulary", "meaning": "All the words used by a particular person or all the words which exist in a language.", "pronunciation": "/vəˈkæbjələri/", "example": "Reading is a great way to expand your English vocabulary." },
+  { "id": 2.113, "word": "Grammar", "meaning": "The rules about how words change their form and combine with other words to make sentences.", "pronunciation": "/ˈɡræmə(r)/", "example": "Don't worry too much about grammar when you first start speaking." },
+  { "id": 2.114, "word": "Pronunciation", "meaning": "The way in which a word or a language is spoken.", "pronunciation": "/prəˌnʌnsiˈeɪʃn/", "example": "Her pronunciation is excellent; she sounds like a native speaker." },
+  { "id": 2.115, "word": "Spelling", "meaning": "The forming of words with the correct letters in the correct order.", "pronunciation": "/ˈspelɪŋ/", "example": "English spelling can be very irregular and confusing." },
+  { "id": 2.116, "word": "Translate", "meaning": "To change words from one language into another.", "pronunciation": "/trænzˈleɪt/", "example": "I need someone to translate this document into Japanese." },
+  { "id": 2.117, "word": "Translation", "meaning": "Something that has been changed from one language into another.", "pronunciation": "/trænzˈleɪʃn/", "example": "The English translation of the novel is very good." },
+  { "id": 2.118, "word": "Interpretation", "meaning": "The act of explaining the meaning of something, or translating spoken words.", "pronunciation": "/ɪnˌtɜːprɪˈteɪʃn/", "example": "Simultaneous interpretation is a very difficult job." },
+  { "id": 2.119, "word": "Barrier", "meaning": "A thing that prevents people from communicating or working together.", "pronunciation": "/ˈbæriə(r)/", "example": "Language should be a bridge, not a barrier between people." },
+  { "id": 2.120, "word": "Communication", "meaning": "The act of sharing information, ideas, or feelings with others.", "pronunciation": "/kəˌmjuːnɪˈkeɪʃn/", "example": "Good communication is essential in any relationship." },
+  { "id": 2.121, "word": "Inseparable", "meaning": "So closely connected that they cannot be considered or used separately.", "pronunciation": "/ɪnˈseprəbl/", "example": "In many cultures, food and family celebrations are inseparable." },
+  { "id": 2.122, "word": "Be tied to", "meaning": "To be very closely related to or dependent on something else.", "pronunciation": "/biː taɪd tə/", "example": "A person's identity is often closely tied to the language they speak." },
+  { "id": 2.123, "word": "Etiquette", "meaning": "The formal rules of correct or polite behaviour in society or among members of a particular profession.", "pronunciation": "/ˈetɪket/", "example": "Table etiquette varies significantly from one country to another." },
+  { "id": 2.124, "word": "Appropriate", "meaning": "Suitable or right for a particular situation or person.", "pronunciation": "/əˈprəʊpriət/", "example": "It is important to wear appropriate clothes when visiting religious sites." },
+  { "id": 2.125, "word": "Inappropriate", "meaning": "Not suitable or right for a particular purpose or situation.", "pronunciation": "/ˌɪnəˈprəʊpriət/", "example": "His casual clothes were quite inappropriate for such a formal wedding." },
+  { "id": 2.126, "word": "Manners", "meaning": "Ways of behaving toward people, esp. ways that are socially correct and show respect for their feelings.", "pronunciation": "/ˈmænəz/", "example": "It is considered bad manners to interrupt someone when they are speaking." },
+  { "id": 2.127, "word": "Offensive", "meaning": "Causing someone to feel deeply hurt, upset, or angry.", "pronunciation": "/əˈfensɪv/", "example": "The programme was cancelled after many people complained it was offensive." },
+  { "id": 2.128, "word": "Misinterpret", "meaning": "To understand something incorrectly.", "pronunciation": "/ˌmɪsɪnˈtɜːprət/", "example": "It is easy to misinterpret body language if you are not familiar with the culture." },
+  { "id": 2.129, "word": "Taboo", "meaning": "A custom prohibiting or restricting a particular practice or forbidding association with a particular person, place, or thing.", "pronunciation": "/təˈbuː/", "example": "In some societies, asking about someone's salary is a social taboo." },
+  { "id": 2.130, "word": "Cross-cultural", "meaning": "Relating to different cultures or comparison between them.", "pronunciation": "/ˌkrɒs ˈkʌltʃərəl/", "example": "The book provides a fascinating look at cross-cultural communication." },
+  { "id": 2.131, "word": "Stereotype", "meaning": "A fixed and oversimplified image or idea of a particular type of person or thing.", "pronunciation": "/ˈsteriətaɪp/", "example": "The movie was criticized for its use of racial stereotypes." },
+  { "id": 2.132, "word": "Prejudice", "meaning": "An unfair and unreasonable opinion or feeling, especially when formed without enough thought or knowledge.", "pronunciation": "/ˈpredʒədɪs/", "example": "There is still a lot of prejudice against foreign workers in some areas." },
+  { "id": 2.133, "word": "Tolerance", "meaning": "The ability or willingness to tolerate something, in particular the existence of opinions or behavior that one does not necessarily agree with.", "pronunciation": "/ˈtɒlərəns/", "example": "Religious tolerance is a fundamental value in a democratic society." },
+  { "id": 2.134, "word": "Appreciation", "meaning": "The recognition and enjoyment of the good qualities of someone or something.", "pronunciation": "/əˌpriːʃiˈeɪʃn/", "example": "The course helped me to develop an appreciation for modern art." },
+  { "id": 2.135, "word": "Clash", "meaning": "A situation in which people's opinions or qualities are very different and cause conflict.", "pronunciation": "/klæʃ/", "example": "There was a clash of cultures when the two companies merged." },
+  { "id": 2.136, "word": "Bridge the gap", "meaning": "To reduce the differences between two things or groups of people.", "pronunciation": "/brɪdʒ ðə ɡæp/", "example": "The new project aims to bridge the gap between young and old people." },
+  { "id": 2.137, "word": "Openness", "meaning": "Willingness to listen to and think about new ideas.", "pronunciation": "/ˈəʊpənnəs/", "example": "I really admire her openness; she considers everyone's ideas before deciding." },
+  { "id": 2.138, "word": "Assumption", "meaning": "Something that you think is true but have no proof about.", "pronunciation": "/əˈsʌmpʃn/", "example": "Your assumption that I would be interested is not true; I am not interested at all." },
+  { "id": 2.139, "word": "Bitterness", "meaning": "An angry and unhappy feeling about something bad that has happened.", "pronunciation": "/ˈbɪtənəs/", "example": "His bitterness comes from his unhappy childhood." },
+  { "id": 2.140, "word": "Bubble", "meaning": "A group of people who have similar ideas and often get together, isolated from others.", "pronunciation": "/ˈbʌbl/", "example": "If you don't meet many people from different backgrounds, you can end up living in a bubble." },
+  { "id": 2.141, "word": "Misconception", "meaning": "An idea that is wrong because it has been based on a failure to understand a situation.", "pronunciation": "/ˌmɪskənˈsepʃn/", "example": "It is a common misconception that all snakes are dangerous." },
+  { "id": 2.142, "word": "Intercultural", "meaning": "Relating to or involving more than one culture.", "pronunciation": "/ˌɪntəˈkʌltʃərəl/", "example": "The university promotes intercultural dialogue among its students." },
+  { "id": 2.143, "word": "Tend", "meaning": "To be likely to behave in a particular way or have a particular characteristic.", "pronunciation": "/tend/", "example": "I tend to go to sleep later in the summer." },
+  { "id": 2.144, "word": "Internalise", "meaning": "To accept an idea or attitude so that it becomes part of your character.", "pronunciation": "/ɪnˈtɜːnəlaɪz/", "example": "People often internalise elements from other cultures when they live abroad." },
+  { "id": 2.145, "word": "Take (sth) out on (sb)", "meaning": "To treat someone badly because you are upset or angry, even if they are not the cause of your problems.", "pronunciation": "/teɪk ... aʊt ɒn .../", "example": "I'm sorry I shouted at you; I was just tired and I took it out on you." },
+  { "id": 2.146, "word": "Misunderstanding", "meaning": "A failure to understand something correctly.", "pronunciation": "/ˌmɪsʌndəˈstændɪŋ/", "example": "There was a slight misunderstanding about what time we were supposed to meet." }
+]
+</script>
+
+<!-- ============================================================
+     HTML PRINCIPAL
+     ============================================================ -->
+<div class="page-wrapper">
+
+  <header class="page-header">
+    <h1 class="page-title">L2 Tarjetas <span>C10</span></h1>
+    <!-- Atajos de teclado — solo visibles en desktop -->
+    <div class="keyboard-hint">
+      <span class="key">← →</span> navegar &nbsp;
+      <span class="key">Espacio</span> girar &nbsp;
+      <span class="key">T</span> escuchar
+    </div>
+  </header>
+
+  <!-- Barra de estadísticas -->
+  <div class="stats-bar">
+    <div class="stat-chip"><span class="dot dot-progress"></span><span id="stat-progress">0 / 0</span></div>
+    <div class="stat-chip"><span class="dot dot-errors"></span><span id="stat-errors">0 errores</span></div>
+    <div class="stat-chip"><span class="dot dot-known"></span><span id="stat-known">0 conocidas</span></div>
+    <div class="stat-chip"><span class="dot dot-off"></span><span id="stat-disabled">0 desactivadas</span></div>
+    <div class="stat-chip"><span class="dot dot-srs"></span><span id="stat-srs">SRS activo</span></div>
+    <button class="btn-history" id="btn-open-history">📊 Historial</button>
+  </div>
+
+  <!-- Panel de opciones -->
+  <div class="options-panel" id="options-panel">
+    <button class="options-toggle" id="options-toggle" aria-expanded="false">
+      ⚙ Opciones
+      <span class="chevron">▼</span>
+    </button>
+    <div class="options-body">
+      <div class="options-inner">
+
+        <div class="option-group">
+          <label>Tarjetas visibles a la vez</label>
+          <div class="cards-count-control">
+            <input type="range" id="cards-count" min="1" max="10" value="1" />
+            <span class="cards-count-value" id="cards-count-value">1</span>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Modo de estudio</label>
+          <select class="option-select" id="study-mode">
+            <option value="flip">Flip (dar vuelta la tarjeta)</option>
+            <option value="quiz">Quiz (escribir la respuesta)</option>
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label>Contenido del Lado B</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="show-meaning"      checked /> Significado</label>
+            <label><input type="checkbox" id="show-pronunciation" checked /> Pronunciación</label>
+            <label><input type="checkbox" id="show-example"       checked /> Ejemplo de uso</label>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label>Lado inicial visible</label>
+          <select class="option-select" id="start-side">
+            <option value="a">Lado A (la palabra)</option>
+            <option value="b">Lado B (significado / etc.)</option>
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label>Mostrar tarjetas</label>
+          <select class="option-select" id="filter-mode">
+            <option value="all">Todas</option>
+            <option value="unknown">Solo las que no sé</option>
+            <option value="known">Solo las que conozco</option>
+            <option value="unrated">Sin valorar</option>
+            <option value="srs-due">SRS: pendientes hoy</option>
+          </select>
+        </div>
+
+        <div class="option-group">
+          <label>Opciones adicionales</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="opt-tts" checked /> Text-to-speech automático</label>
+            <label><input type="checkbox" id="opt-srs" checked /> Repetición espaciada (SRS)</label>
+          </div>
+        </div>
+
+        <div class="options-actions">
+          <button class="btn btn-primary" id="btn-apply">▶ Aplicar y comenzar</button>
+          <button class="btn btn-outline"  id="btn-shuffle">⇄ Volver a mezclar</button>
+          <button class="btn btn-danger"   id="btn-reset-progress">↺ Reiniciar progreso</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Área principal -->
+  <div class="cards-area" id="cards-area">
+
+    <div class="mode-badge flip-mode" id="mode-badge">🔄 Modo Flip</div>
+
+    <!-- Grid (Modo Flip) -->
+    <div class="cards-grid" id="cards-grid"></div>
+
+    <!-- Tarjeta Quiz (Modo Quiz) -->
+    <div id="quiz-container" style="display:none; width:100%;"></div>
+
+    <!-- Navegación -->
+    <div class="nav-controls" id="nav-controls">
+      <button class="nav-btn" id="btn-prev" title="Anterior (←)">◀</button>
+      <div class="nav-info" id="nav-info">— / —</div>
+      <button class="nav-btn" id="btn-next" title="Siguiente (→)">▶</button>
+    </div>
+
+    <!-- Pantalla de pausa -->
+    <div class="pause-screen" id="pause-screen">
+      <div class="pause-icon">☕</div>
+      <h2 class="pause-title">Pausa</h2>
+      <p class="pause-desc">Completaste un bloque de 10. Tomá un respiro antes de continuar.</p>
+      <div class="pause-stats">
+        <div class="pause-stat">
+          <span class="pause-stat-num orange" id="pause-remaining">—</span>
+          <span class="pause-stat-label">Restantes</span>
+        </div>
+        <div class="pause-stat">
+          <span class="pause-stat-num red" id="pause-errors">—</span>
+          <span class="pause-stat-label">Errores</span>
+        </div>
+        <div class="pause-stat">
+          <span class="pause-stat-num green" id="pause-known">—</span>
+          <span class="pause-stat-label">Conocidas</span>
+        </div>
+        <div class="pause-stat">
+          <span class="pause-stat-num blue" id="pause-quiz-correct">—</span>
+          <span class="pause-stat-label">Quiz ✓</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-primary" id="btn-continue">Continuar →</button>
+        <button class="btn btn-outline"  id="btn-pause-stop">Terminar sesión</button>
+      </div>
+    </div>
+
+    <!-- Pantalla de fin -->
+    <div class="finish-screen" id="finish-screen">
+      <div class="pause-icon">🎉</div>
+      <h2 class="pause-title">¡Completado!</h2>
+      <p class="pause-desc">Terminaste todas las tarjetas de esta sesión.</p>
+      <div class="pause-stats">
+        <div class="pause-stat">
+          <span class="pause-stat-num green" id="finish-known">—</span>
+          <span class="pause-stat-label">Conocidas</span>
+        </div>
+        <div class="pause-stat">
+          <span class="pause-stat-num red" id="finish-errors">—</span>
+          <span class="pause-stat-label">Errores</span>
+        </div>
+        <div class="pause-stat">
+          <span class="pause-stat-num blue" id="finish-quiz-score">—</span>
+          <span class="pause-stat-label">Quiz ✓</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-primary" id="btn-restart">↺ Volver a empezar</button>
+        <button class="btn btn-outline"  id="btn-finish-history">📊 Ver historial</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal de historial -->
+<div class="modal-overlay" id="modal-history">
+  <div class="modal-box">
+    <button class="modal-close" id="modal-close">✕</button>
+    <h2 class="modal-title">📊 Historial de progreso</h2>
+
+    <div class="progress-section">
+      <div class="progress-section-title">Progreso global del capítulo</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="hist-bar" style="width:0%"></div>
+      </div>
+      <div class="progress-bar-label" id="hist-bar-label">0% conocidas</div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-section-title">Últimas sesiones (correctas vs errores)</div>
+      <div class="session-chart" id="session-chart"></div>
+      <div style="display:flex; gap:12px; font-size:0.72rem; color:var(--text-muted); margin-top:4px;">
+        <span>🟢 Correctas</span><span>🔴 Errores</span>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-section-title">Estado por tarjeta</div>
+      <div class="card-progress-list" id="card-progress-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/*
+  ==============================================================
+  SECCIÓN 1: DATOS Y CONSTANTES
+  ==============================================================
+*/
+
+// Leer el JSON embebido en la etiqueta <script type="application/json">
+// JSON.parse convierte el texto en un array de objetos JavaScript
+const ALL_CARDS = JSON.parse(document.getElementById('cards-data').textContent);
+
+// Claves de localStorage — separadas para no mezclar tipos de datos
+const KEY_RATINGS  = 'l2_c10_ratings';   // Valoraciones manuales del usuario
+const KEY_SRS      = 'l2_c10_srs';       // Datos del algoritmo de repetición espaciada
+const KEY_SESSIONS = 'l2_c10_sessions';  // Historial de sesiones completadas
+
+/*
+  ==============================================================
+  SECCIÓN 2: ESTADO GLOBAL
+  ==============================================================
+  Un único objeto centraliza todo lo que puede cambiar.
+  Esto facilita debuggear y mantener el código.
+*/
+let state = {
+  deck:              [],      // Mazo activo de la sesión (ya filtrado y mezclado)
+  currentIndex:      0,       // Posición actual dentro del deck
+  visibleCount:      1,       // Cuántas tarjetas se muestran a la vez (1–10)
+  showMeaning:       true,    // Mostrar significado en Lado B
+  showPronun:        true,    // Mostrar pronunciación en Lado B
+  showExample:       true,    // Mostrar ejemplo en Lado B
+  startSide:         'a',     // Qué lado aparece primero: 'a' o 'b'
+  filterMode:        'all',   // Filtro del deck
+  studyMode:         'flip',  // 'flip' o 'quiz'
+  useTTS:            true,    // Text-to-speech al mostrar tarjeta
+  useSRS:            true,    // Activar algoritmo SRS
+  ratings:           {},      // {id: 'known'|'unknown'|'disabled'}
+  srsData:           {},      // {id: {interval, easiness, dueDate, repetitions}}
+  errorCount:        0,       // Errores en la sesión actual
+  quizCorrect:       0,       // Respuestas correctas en modo Quiz
+  cardsShownInBlock: 0,       // Contador para las pausas cada 10
+  isPaused:          false,
+  quizAnswered:      false,   // Si ya se verificó la tarjeta actual en modo Quiz
+};
+
+/*
+  ==============================================================
+  SECCIÓN 3: PERSISTENCIA — localStorage
+  ==============================================================
+  localStorage guarda datos como texto en el navegador.
+  JSON.stringify convierte objeto→texto, JSON.parse hace texto→objeto.
+  Los datos persisten entre sesiones (hasta que el usuario los borre).
+*/
+
+function loadRatings()  { const s = localStorage.getItem(KEY_RATINGS);  return s ? JSON.parse(s) : {}; }
+function loadSRS()      { const s = localStorage.getItem(KEY_SRS);      return s ? JSON.parse(s) : {}; }
+function loadSessions() { const s = localStorage.getItem(KEY_SESSIONS); return s ? JSON.parse(s) : []; }
+
+function saveRatings() { localStorage.setItem(KEY_RATINGS, JSON.stringify(state.ratings)); }
+function saveSRS()     { localStorage.setItem(KEY_SRS,     JSON.stringify(state.srsData)); }
+
+// Guardar el resultado de la sesión actual en el historial (máx. 8 sesiones)
+function saveSession(known, errors) {
+  const sessions = loadSessions();
+  sessions.push({ date: new Date().toLocaleDateString('es'), known, errors });
+  if (sessions.length > 8) sessions.shift(); // Eliminar la sesión más vieja
+  localStorage.setItem(KEY_SESSIONS, JSON.stringify(sessions));
+}
+
+// Cambiar la valoración de una tarjeta y guardar inmediatamente
+function setRating(id, rating) {
+  if (rating === null) {
+    delete state.ratings[id]; // null = sin valorar → eliminar la clave
+  } else {
+    state.ratings[id] = rating;
+  }
+  saveRatings();
+  updateStatsBar();
+}
+
+/*
+  ==============================================================
+  SECCIÓN 4: ALGORITMO SRS (Repetición Espaciada — SM-2)
+  ==============================================================
+  SM-2 es el algoritmo que usa Anki. La idea:
+    - Si respondés bien → el intervalo de revisión CRECE (1d → 3d → 8d…)
+    - Si fallás         → el intervalo vuelve a 1 día
+  
+  Esto hace que las palabras difíciles aparezcan más seguido
+  y las fáciles menos, optimizando el tiempo de estudio.
+  
+  Campos de srsData[id]:
+    interval:    días hasta la próxima revisión
+    easiness:    factor de facilidad (default 2.5, mínimo 1.3)
+    dueDate:     fecha de próxima revisión en formato "YYYY-MM-DD"
+    repetitions: racha de respuestas correctas consecutivas
+*/
+
+// Obtener datos SRS de una tarjeta, o valores iniciales si no existe aún
+function getSRS(id) {
+  return state.srsData[id] || {
+    interval:    1,
+    easiness:    2.5,
+    dueDate:     new Date().toISOString().slice(0, 10), // hoy
+    repetitions: 0,
+  };
+}
+
+// Actualizar los datos SRS después de una respuesta
+// quality: número del 0 al 5 (0=fallo total, 3=correcto con esfuerzo, 5=perfecto)
+function updateSRS(id, quality) {
+  const s = getSRS(id);
+
+  if (quality >= 3) {
+    // Respuesta correcta: calcular el próximo intervalo
+    if (s.repetitions === 0)      s.interval = 1;   // Primera vez: revisar mañana
+    else if (s.repetitions === 1) s.interval = 3;   // Segunda vez: en 3 días
+    else s.interval = Math.round(s.interval * s.easiness); // En adelante: multiplicar
+    s.repetitions++;
+  } else {
+    // Respuesta incorrecta: empezar de cero
+    s.interval    = 1;
+    s.repetitions = 0;
+  }
+
+  // Ajustar el factor de facilidad (fórmula oficial SM-2)
+  // Con calidad alta sube, con calidad baja baja, mínimo 1.3
+  s.easiness = Math.max(
+    1.3,
+    s.easiness + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
+  );
+
+  // Calcular la próxima fecha de revisión sumando el intervalo en días
+  const due = new Date();
+  due.setDate(due.getDate() + s.interval);
+  s.dueDate = due.toISOString().slice(0, 10);
+
+  state.srsData[id] = s;
+  saveSRS(); // Guardar inmediatamente
+}
+
+// ¿Esta tarjeta está pendiente de revisión hoy según SRS?
+function isSRSDue(id) {
+  const today = new Date().toISOString().slice(0, 10);
+  return getSRS(id).dueDate <= today;
+}
+
+// Texto descriptivo del estado SRS para mostrar en la tarjeta
+function getSRSLabel(id) {
+  const s = getSRS(id);
+  if (s.repetitions === 0) return 'nueva';
+  if (s.interval < 7)      return `revisar en ${s.interval}d`;
+  if (s.interval < 21)     return `cada ${s.interval}d`;
+  return `dominada (${s.interval}d)`;
+}
+
+// Nivel de madurez para el estilo visual (borde derecho de la tarjeta)
+function getSRSMaturity(id) {
+  const s = getSRS(id);
+  if (s.repetitions === 0) return 'new';
+  if (s.interval < 7)      return 'young';
+  return 'mature'; // dominada = borde azul
+}
+
+/*
+  ==============================================================
+  SECCIÓN 5: CONSTRUCCIÓN DEL DECK Y MEZCLA
+  ==============================================================
+*/
+
+// Fisher-Yates shuffle: mezcla aleatoria sin sesgo estadístico
+// Es el algoritmo estándar para mezclar arrays en programación
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]; // Intercambiar posiciones i y j
+  }
+  return arr;
+}
+
+function buildDeck() {
+  let filtered;
+
+  // Filtrar según el modo elegido en opciones
+  switch (state.filterMode) {
+    case 'unknown':
+      filtered = ALL_CARDS.filter(c => state.ratings[c.id] === 'unknown');
+      break;
+    case 'known':
+      filtered = ALL_CARDS.filter(c => state.ratings[c.id] === 'known');
+      break;
+    case 'unrated':
+      filtered = ALL_CARDS.filter(c => !state.ratings[c.id]);
+      break;
+    case 'srs-due':
+      // Solo las que SRS dice que hay que repasar hoy
+      filtered = ALL_CARDS.filter(c => state.ratings[c.id] !== 'disabled' && isSRSDue(c.id));
+      break;
+    default:
+      // 'all': todas excepto las desactivadas
+      filtered = ALL_CARDS.filter(c => state.ratings[c.id] !== 'disabled');
+  }
+
+  if (filtered.length === 0) {
+    showToast('No hay tarjetas con ese filtro. Mostrando todas.');
+    filtered = [...ALL_CARDS];
+  }
+
+  // MEZCLA AUTOMÁTICA siempre al construir el deck
+  state.deck = shuffleArray(filtered);
+
+  // Reiniciar contadores de sesión
+  state.currentIndex      = 0;
+  state.errorCount        = 0;
+  state.quizCorrect       = 0;
+  state.cardsShownInBlock = 0;
+  state.isPaused          = false;
+  state.quizAnswered      = false;
+}
+
+/*
+  ==============================================================
+  SECCIÓN 6: TEXT-TO-SPEECH (Web Speech API)
+  ==============================================================
+  La Web Speech API viene integrada en Chrome, Edge, Safari y
+  Firefox modernos. No requiere ninguna librería externa.
+  
+  SpeechSynthesisUtterance representa el texto a leer.
+  speechSynthesis es el motor de voz del navegador.
+*/
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Tu navegador no soporta text-to-speech.');
+    return;
+  }
+  // Cancelar si ya hay algo leyéndose
+  window.speechSynthesis.cancel();
+
+  const u  = new SpeechSynthesisUtterance(text);
+  u.lang   = 'en-US'; // Inglés americano
+  u.rate   = 0.9;     // Levemente más lento = más claro
+  u.pitch  = 1;
+  window.speechSynthesis.speak(u);
+}
+
+/*
+  ==============================================================
+  SECCIÓN 7: RENDERIZADO
+  ==============================================================
+*/
+
+// Referencias a los elementos del DOM que se usan frecuentemente
+const cardsGrid     = document.getElementById('cards-grid');
+const quizContainer = document.getElementById('quiz-container');
+const navControls   = document.getElementById('nav-controls');
+const pauseScreen   = document.getElementById('pause-screen');
+const finishScreen  = document.getElementById('finish-screen');
+const navInfo       = document.getElementById('nav-info');
+const btnPrev       = document.getElementById('btn-prev');
+const btnNext       = document.getElementById('btn-next');
+const modeBadge     = document.getElementById('mode-badge');
+
+// Función principal de renderizado — decide qué modo mostrar
+function renderCards() {
+  updateModeBadge();
+
+  if (state.studyMode === 'quiz') {
+    renderQuizCard();
+    return;
+  }
+
+  // ---- Modo Flip ----
+  pauseScreen.classList.remove('active');
+  finishScreen.classList.remove('active');
+  cardsGrid.style.display     = 'grid';
+  quizContainer.style.display = 'none';
+  navControls.style.display   = 'flex';
+
+  cardsGrid.innerHTML = '';
+
+  // Calcular cuántas columnas necesita el grid
+  const cols = Math.min(state.visibleCount, state.deck.length);
+  cardsGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  // Tomar solo el slice de tarjetas visibles
+  const visible = state.deck.slice(state.currentIndex, state.currentIndex + state.visibleCount);
+
+  visible.forEach((card, offset) => {
+    cardsGrid.appendChild(createCardElement(card, state.currentIndex + offset));
+  });
+
+  // TTS automático para la primera tarjeta visible
+  if (state.useTTS && visible.length > 0) speak(visible[0].word);
+
+  updateNavInfo();
+  updateStatsBar();
+}
+
+// Crear el elemento DOM completo de una tarjeta (modo flip)
+function createCardElement(card, globalIndex) {
+  const rating  = state.ratings[card.id] || null;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'card-wrapper';
+
+  const cardEl = document.createElement('div');
+  cardEl.className      = 'card';
+  cardEl.dataset.id     = card.id;
+  cardEl.dataset.status = rating || '';
+  cardEl.dataset.srs    = state.useSRS ? getSRSMaturity(card.id) : 'new';
+
+  if (state.startSide === 'b') cardEl.classList.add('flipped');
+
+  // ---- Cara A (lado de la palabra) ----
+  const faceA = document.createElement('div');
+  faceA.className = 'card-face card-face-a';
+  faceA.innerHTML = `
+    <span class="card-side-label">A</span>
+    <span class="card-number">${globalIndex + 1} / ${state.deck.length}</span>
+    <div class="card-word">${card.word}</div>
+    ${state.useSRS ? `<div class="srs-info">⏱ ${getSRSLabel(card.id)}</div>` : ''}
+    <div class="card-hint">Toca para ver el otro lado</div>
+    <button class="tts-btn" data-word="${card.word}" title="Escuchar (T)">🔊</button>
+    ${buildRatingButtons(card.id, rating)}
+  `;
+
+  // ---- Cara B (lado del contenido) ----
+  // Se arma dinámicamente según las opciones del usuario
+  let bContent = '<div class="card-b-content">';
+  if (state.showMeaning && card.meaning)         bContent += `<div class="card-meaning">${card.meaning}</div>`;
+  if (state.showPronun  && card.pronunciation)   bContent += `<div class="card-pronunciation">${card.pronunciation}</div>`;
+  if (state.showExample && card.example)         bContent += `<div class="card-example">${card.example}</div>`;
+  bContent += '</div>';
+
+  const faceB = document.createElement('div');
+  faceB.className = 'card-face card-face-b';
+  faceB.innerHTML = `
+    <span class="card-side-label">B</span>
+    <span class="card-number">${globalIndex + 1} / ${state.deck.length}</span>
+    ${bContent}
+    ${buildRatingButtons(card.id, rating)}
+  `;
+
+  // Click en la tarjeta: girar (excepto si es el botón TTS o de valoración)
+  cardEl.addEventListener('click', (e) => {
+    const ttsBtn = e.target.closest('.tts-btn');
+    if (ttsBtn) { speak(ttsBtn.dataset.word); return; }
+    if (e.target.closest('.rating-btn')) return;
+    cardEl.classList.toggle('flipped');
+  });
+
+  cardEl.appendChild(faceA);
+  cardEl.appendChild(faceB);
+  wrapper.appendChild(cardEl);
+  return wrapper;
+}
+
+// Construir el HTML de los botones de valoración
+function buildRatingButtons(cardId, currentRating) {
+  return `
+    <div class="card-actions">
+      <button class="rating-btn ${currentRating === 'known'    ? 'known-active'    : ''}" data-rate="known"    data-card="${cardId}">✓ Conozco</button>
+      <button class="rating-btn ${currentRating === 'unknown'  ? 'unknown-active'  : ''}" data-rate="unknown"  data-card="${cardId}">✗ No sé</button>
+      <button class="rating-btn ${currentRating === 'disabled' ? 'disabled-active' : ''}" data-rate="disabled" data-card="${cardId}">— Omitir</button>
+    </div>
+  `;
+}
+
+/*
+  ==============================================================
+  SECCIÓN 8: MODO QUIZ
+  ==============================================================
+  El usuario escribe el significado. La comparación es flexible:
+  acepta respuestas parciales y no distingue mayúsculas.
+*/
+
+function renderQuizCard() {
+  pauseScreen.classList.remove('active');
+  finishScreen.classList.remove('active');
+  cardsGrid.style.display     = 'none';
+  quizContainer.style.display = 'block';
+  navControls.style.display   = 'flex';
+
+  const card = state.deck[state.currentIndex];
+  if (!card) return;
+
+  state.quizAnswered = false;
+
+  quizContainer.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-prompt-label">¿Cuál es el significado de...?</div>
+      <div class="quiz-word">${card.word}</div>
+      ${state.showPronun && card.pronunciation ? `<div class="card-pronunciation">${card.pronunciation}</div>` : ''}
+      <button class="tts-btn" style="position:static; font-size:1.2rem;" data-word="${card.word}" title="Escuchar">🔊</button>
+      <input
+        type="text"
+        class="quiz-input"
+        id="quiz-input"
+        placeholder="Escribí el significado en español..."
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <div class="quiz-answer-reveal" id="quiz-answer-reveal"></div>
+      <div class="card-actions">
+        <button class="btn btn-primary" id="quiz-submit">Verificar</button>
+        <button class="btn btn-outline"  id="quiz-skip">Saltar →</button>
+      </div>
+    </div>
+  `;
+
+  const input    = document.getElementById('quiz-input');
+  const feedback = document.getElementById('quiz-feedback');
+  const reveal   = document.getElementById('quiz-answer-reveal');
+
+  if (state.useTTS) speak(card.word);
+
+  // Botón de escuchar dentro del quiz
+  quizContainer.querySelector('.tts-btn').addEventListener('click', () => speak(card.word));
+
+  function checkAnswer() {
+    // Si ya se respondió, avanzar a la siguiente tarjeta
+    if (state.quizAnswered) { goNext(); return; }
+
+    const userAnswer    = input.value.trim().toLowerCase();
+    if (!userAnswer) return; // No verificar si el input está vacío
+
+    // Normalizar la respuesta correcta para comparación flexible
+    // Ejemplo: "Ceder / Dar" → ["ceder", "dar"]
+    const correctParts = card.meaning.toLowerCase()
+      .split('/')
+      .map(p => p.trim());
+
+    // Aceptar si el usuario escribió alguna de las partes válidas
+    const correct = correctParts.some(part =>
+      part === userAnswer || part.includes(userAnswer) || userAnswer.includes(part)
+    );
+
+    state.quizAnswered = true;
+
+    if (correct) {
+      input.classList.add('correct');
+      feedback.textContent = '✓ ¡Correcto!';
+      feedback.className   = 'quiz-feedback correct';
+      state.quizCorrect++;
+      if (state.useSRS) updateSRS(card.id, 4); // quality 4 = bien
+      setRating(card.id, 'known');
+    } else {
+      input.classList.add('incorrect');
+      feedback.textContent  = '✗ Incorrecto';
+      feedback.className    = 'quiz-feedback incorrect';
+      state.errorCount++;
+
+      // Mostrar la respuesta correcta con el ejemplo
+      reveal.style.display  = 'block';
+      let html = `Respuesta: <strong>${card.meaning}</strong>`;
+      if (state.showExample && card.example) html += `<br><em>${card.example}</em>`;
+      reveal.innerHTML = html;
+
+      if (state.useSRS) updateSRS(card.id, 1); // quality 1 = fallo
+      setRating(card.id, 'unknown');
+      moveCardToEnd(card.id); // Mandar al fondo para repasar
+    }
+
+    document.getElementById('quiz-submit').textContent = 'Siguiente →';
+    updateStatsBar();
+  }
+
+  document.getElementById('quiz-submit').addEventListener('click', checkAnswer);
+  document.getElementById('quiz-skip').addEventListener('click', () => {
+    state.quizAnswered = true; goNext();
+  });
+
+  // Enter = verificar (igual que el botón)
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+
+  input.focus();
+  updateNavInfo();
+  updateStatsBar();
+}
+
+/*
+  ==============================================================
+  SECCIÓN 9: EVENTOS DE VALORACIÓN (Modo Flip)
+  ==============================================================
+  Event delegation: un listener en el contenedor padre captura
+  los clicks de todos los botones hijos. Más eficiente que
+  agregar un listener individual a cada botón.
+*/
+
+cardsGrid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.rating-btn');
+  if (!btn) return;
+
+  const cardId    = parseInt(btn.dataset.card);
+  const rate      = btn.dataset.rate;
+  const current   = state.ratings[cardId];
+  const newRating = (current === rate) ? null : rate; // Toggle
+
+  setRating(cardId, newRating);
+
+  if (newRating === 'unknown') {
+    moveCardToEnd(cardId);
+    state.errorCount++;
+    if (state.useSRS) updateSRS(cardId, 1); // SRS: fallo
+    showToast('Tarjeta enviada al final para repasar.');
+  }
+
+  if (newRating === 'known' && state.useSRS) {
+    updateSRS(cardId, 4); // SRS: éxito
+  }
+
+  renderCards();
+});
+
+// Mover una tarjeta al final del deck (para repaso)
+// splice(idx, 1) la saca del array y la devuelve; push la agrega al final
+function moveCardToEnd(cardId) {
+  const idx = state.deck.findIndex(c => c.id === cardId);
+  if (idx === -1) return;
+  state.deck.push(state.deck.splice(idx, 1)[0]);
+}
+
+/*
+  ==============================================================
+  SECCIÓN 10: NAVEGACIÓN
+  ==============================================================
+*/
+
+btnNext.addEventListener('click', goNext);
+btnPrev.addEventListener('click', goPrev);
+
+function goNext() {
+  // En modo quiz: si hay texto sin verificar, verificar primero
+  if (state.studyMode === 'quiz' && !state.quizAnswered) {
+    const input = document.getElementById('quiz-input');
+    if (input && input.value.trim()) {
+      document.getElementById('quiz-submit')?.click();
+      return;
+    }
+  }
+
+  const step = state.visibleCount;
+  state.cardsShownInBlock += step;
+
+  if (state.currentIndex + step >= state.deck.length) {
+    // Fin del deck → guardar sesión y mostrar pantalla final
+    saveSession(
+      Object.values(state.ratings).filter(v => v === 'known').length,
+      state.errorCount
+    );
+    showFinish();
+    return;
+  }
+
+  state.currentIndex += step;
+
+  // ¿Bloque de 10 completado? Mostrar pausa
+  if (state.cardsShownInBlock >= 10) {
+    state.cardsShownInBlock = 0;
+    showPause();
+    return;
+  }
+
+  renderCards();
+}
+
+function goPrev() {
+  const step = state.visibleCount;
+  if (state.currentIndex - step < 0) return;
+  state.currentIndex -= step;
+  renderCards();
+}
+
+// Actualizar el contador "X / Y" y el estado de los botones de nav
+function updateNavInfo() {
+  const current = Math.min(state.currentIndex + state.visibleCount, state.deck.length);
+  navInfo.textContent  = `${current} / ${state.deck.length}`;
+  btnPrev.disabled = state.currentIndex === 0;
+  btnNext.disabled = state.currentIndex + state.visibleCount >= state.deck.length;
+}
+
+/*
+  ==============================================================
+  SECCIÓN 11: ATAJOS DE TECLADO
+  ==============================================================
+  document.addEventListener('keydown', ...) escucha TODAS las
+  teclas en cualquier parte de la página.
+  
+  Atajos disponibles:
+    ArrowRight → siguiente tarjeta
+    ArrowLeft  → tarjeta anterior
+    Space      → girar la tarjeta actual (modo flip)
+    T          → escuchar la palabra con TTS
+*/
+
+document.addEventListener('keydown', (e) => {
+  // No interferir si el usuario está escribiendo en un campo de texto
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // No interferir si hay pantalla de pausa o fin activa
+  if (pauseScreen.classList.contains('active'))  return;
+  if (finishScreen.classList.contains('active')) return;
+
+  switch (e.key) {
+    case 'ArrowRight':
+      e.preventDefault(); // Evitar scroll horizontal de la página
+      goNext();
+      break;
+
+    case 'ArrowLeft':
+      e.preventDefault();
+      goPrev();
+      break;
+
+    case ' ': // Barra espaciadora
+      e.preventDefault(); // Evitar scroll vertical de la página
+      if (state.studyMode === 'flip') {
+        // Girar la primera tarjeta del grupo actual
+        const firstCard = cardsGrid.querySelector('.card');
+        if (firstCard) firstCard.classList.toggle('flipped');
+      }
+      break;
+
+    case 't':
+    case 'T':
+      // Leer en voz alta la palabra de la tarjeta actual
+      const card = state.deck[state.currentIndex];
+      if (card) speak(card.word);
+      break;
+  }
+});
+
+/*
+  ==============================================================
+  SECCIÓN 12: PANTALLA DE PAUSA
+  ==============================================================
+*/
+
+function showPause() {
+  state.isPaused = true;
+  cardsGrid.style.display     = 'none';
+  quizContainer.style.display = 'none';
+  navControls.style.display   = 'none';
+  finishScreen.classList.remove('active');
+  pauseScreen.classList.add('active');
+
+  document.getElementById('pause-remaining').textContent    = state.deck.length - state.currentIndex;
+  document.getElementById('pause-errors').textContent       = state.errorCount;
+  document.getElementById('pause-known').textContent        =
+    Object.values(state.ratings).filter(v => v === 'known').length;
+  document.getElementById('pause-quiz-correct').textContent = state.quizCorrect;
+}
+
+document.getElementById('btn-continue').addEventListener('click', () => {
+  state.isPaused = false;
+  pauseScreen.classList.remove('active');
+  renderCards();
+});
+
+document.getElementById('btn-pause-stop').addEventListener('click', () => {
+  saveSession(
+    Object.values(state.ratings).filter(v => v === 'known').length,
+    state.errorCount
+  );
+  showFinish();
+});
+
+/*
+  ==============================================================
+  SECCIÓN 13: PANTALLA DE FIN
+  ==============================================================
+*/
+
+function showFinish() {
+  cardsGrid.style.display     = 'none';
+  quizContainer.style.display = 'none';
+  navControls.style.display   = 'none';
+  pauseScreen.classList.remove('active');
+  finishScreen.classList.add('active');
+
+  document.getElementById('finish-known').textContent     =
+    Object.values(state.ratings).filter(v => v === 'known').length;
+  document.getElementById('finish-errors').textContent    = state.errorCount;
+  document.getElementById('finish-quiz-score').textContent = state.quizCorrect;
+}
+
+document.getElementById('btn-restart').addEventListener('click', () => {
+  finishScreen.classList.remove('active');
+  applyOptions();
+});
+
+document.getElementById('btn-finish-history').addEventListener('click', openHistory);
+
+/*
+  ==============================================================
+  SECCIÓN 14: ESTADÍSTICAS Y BADGE DE MODO
+  ==============================================================
+*/
+
+function updateStatsBar() {
+  const total    = state.deck.length;
+  const current  = Math.min(state.currentIndex + state.visibleCount, total);
+  const known    = Object.values(state.ratings).filter(v => v === 'known').length;
+  const disabled = Object.values(state.ratings).filter(v => v === 'disabled').length;
+  const srsDue   = ALL_CARDS.filter(c =>
+    state.ratings[c.id] !== 'disabled' && isSRSDue(c.id)
+  ).length;
+
+  document.getElementById('stat-progress').textContent  = `${current} / ${total}`;
+  document.getElementById('stat-errors').textContent    = `${state.errorCount} errores`;
+  document.getElementById('stat-known').textContent     = `${known} conocidas`;
+  document.getElementById('stat-disabled').textContent  = `${disabled} desactivadas`;
+  document.getElementById('stat-srs').textContent       = `${srsDue} para revisar hoy`;
+}
+
+function updateModeBadge() {
+  if (state.studyMode === 'quiz') {
+    modeBadge.className   = 'mode-badge quiz-mode';
+    modeBadge.textContent = '✏ Modo Quiz';
+  } else {
+    modeBadge.className   = 'mode-badge flip-mode';
+    modeBadge.textContent = '🔄 Modo Flip';
+  }
+}
+
+/*
+  ==============================================================
+  SECCIÓN 15: MODAL DE HISTORIAL
+  ==============================================================
+  Construye dinámicamente:
+    1. Barra de progreso global
+    2. Gráfico de sesiones (divs como barras)
+    3. Lista de todas las tarjetas con su estado y datos SRS
+*/
+
+const modalHistory = document.getElementById('modal-history');
+
+function openHistory() {
+  // 1. Progreso global
+  const total = ALL_CARDS.length;
+  const known  = Object.values(state.ratings).filter(v => v === 'known').length;
+  const pct    = total > 0 ? Math.round((known / total) * 100) : 0;
+
+  document.getElementById('hist-bar').style.width       = `${pct}%`;
+  document.getElementById('hist-bar-label').textContent = `${pct}% conocidas (${known} de ${total})`;
+
+  // 2. Gráfico de sesiones
+  const sessions = loadSessions();
+  const chartEl  = document.getElementById('session-chart');
+  chartEl.innerHTML = '';
+
+  if (sessions.length === 0) {
+    chartEl.innerHTML = '<span style="font-size:0.8rem;color:var(--text-light)">Sin sesiones guardadas aún.</span>';
+  } else {
+    // Escalar las barras al máximo de la sesión más grande
+    const maxVal = Math.max(...sessions.map(s => s.known + s.errors), 1);
+
+    sessions.forEach(s => {
+      const knownH = Math.round((s.known  / maxVal) * 72);
+      const errH   = Math.round((s.errors / maxVal) * 72);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'session-bar-wrap';
+      wrap.innerHTML = `
+        <div class="session-bar green-bar" style="height:${knownH}px" title="${s.known} correctas"></div>
+        <div class="session-bar red-bar"   style="height:${errH}px"   title="${s.errors} errores"></div>
+        <div class="session-bar-label">${s.date}</div>
+      `;
+      chartEl.appendChild(wrap);
+    });
+  }
+
+  // 3. Lista por tarjeta
+  const listEl = document.getElementById('card-progress-list');
+  listEl.innerHTML = '';
+
+  ALL_CARDS.forEach(card => {
+    const rating   = state.ratings[card.id] || 'sin valorar';
+    const dotColor = rating === 'known'    ? 'var(--green)'  :
+                     rating === 'unknown'  ? 'var(--red)'    :
+                     rating === 'disabled' ? 'var(--gray)'   : 'var(--border)';
+
+    const row = document.createElement('div');
+    row.className = 'card-progress-row';
+    row.innerHTML = `
+      <span class="card-status-dot" style="background:${dotColor}"></span>
+      <span class="card-progress-word">${card.word}</span>
+      <span style="font-size:0.75rem;color:var(--text-muted);">${rating}</span>
+      ${state.useSRS ? `<span class="card-progress-srs">⏱ ${getSRSLabel(card.id)}</span>` : ''}
+    `;
+    listEl.appendChild(row);
+  });
+
+  modalHistory.classList.add('active');
+}
+
+document.getElementById('btn-open-history').addEventListener('click', openHistory);
+
+document.getElementById('modal-close').addEventListener('click', () => {
+  modalHistory.classList.remove('active');
+});
+
+// Cerrar el modal al hacer click en el fondo oscuro
+modalHistory.addEventListener('click', (e) => {
+  if (e.target === modalHistory) modalHistory.classList.remove('active');
+});
+
+/*
+  ==============================================================
+  SECCIÓN 16: PANEL DE OPCIONES
+  ==============================================================
+*/
+
+const optionsPanel  = document.getElementById('options-panel');
+const optionsToggle = document.getElementById('options-toggle');
+
+optionsToggle.addEventListener('click', () => {
+  const isOpen = optionsPanel.classList.toggle('open');
+  optionsToggle.setAttribute('aria-expanded', isOpen);
+});
+
+document.getElementById('cards-count').addEventListener('input', (e) => {
+  document.getElementById('cards-count-value').textContent = e.target.value;
+});
+
+// Leer todas las opciones del panel y aplicar
+function applyOptions() {
+  state.visibleCount = parseInt(document.getElementById('cards-count').value);
+  state.showMeaning  = document.getElementById('show-meaning').checked;
+  state.showPronun   = document.getElementById('show-pronunciation').checked;
+  state.showExample  = document.getElementById('show-example').checked;
+  state.startSide    = document.getElementById('start-side').value;
+  state.filterMode   = document.getElementById('filter-mode').value;
+  state.studyMode    = document.getElementById('study-mode').value;
+  state.useTTS       = document.getElementById('opt-tts').checked;
+  state.useSRS       = document.getElementById('opt-srs').checked;
+
+  // El modo quiz siempre muestra 1 tarjeta a la vez
+  if (state.studyMode === 'quiz') state.visibleCount = 1;
+
+  buildDeck();   // Construir deck filtrado y mezclado
+  renderCards(); // Mostrar la primera tarjeta
+
+  optionsPanel.classList.remove('open');
+  optionsToggle.setAttribute('aria-expanded', false);
+}
+
+document.getElementById('btn-apply').addEventListener('click', applyOptions);
+
+document.getElementById('btn-shuffle').addEventListener('click', () => {
+  // buildDeck ya mezcla automáticamente
+  buildDeck();
+  renderCards();
+  showToast('Tarjetas mezcladas nuevamente.');
+  optionsPanel.classList.remove('open');
+});
+
+document.getElementById('btn-reset-progress').addEventListener('click', () => {
+  const ok = confirm('¿Reiniciar todas las valoraciones y datos SRS? Esta acción no se puede deshacer.');
+  if (!ok) return;
+  state.ratings = {};
+  state.srsData  = {};
+  saveRatings();
+  saveSRS();
+  buildDeck();
+  renderCards();
+  showToast('Progreso y datos SRS reiniciados.');
+});
+
+/*
+  ==============================================================
+  SECCIÓN 17: TOAST (notificación breve y no invasiva)
+  ==============================================================
+*/
+
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2500);
+}
+
+/*
+  ==============================================================
+  SECCIÓN 18: INICIALIZACIÓN
+  ==============================================================
+  Se ejecuta UNA SOLA VEZ cuando la página termina de cargar.
+  DOMContentLoaded garantiza que todos los elementos HTML existen.
+*/
+
+function init() {
+  state.ratings = loadRatings(); // Valoraciones guardadas de sesiones anteriores
+  state.srsData  = loadSRS();    // Datos SRS guardados de sesiones anteriores
+  buildDeck();                   // Construir y MEZCLAR el deck inicial
+  renderCards();                 // Mostrar la primera tarjeta
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>
